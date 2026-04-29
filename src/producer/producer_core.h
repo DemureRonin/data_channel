@@ -15,7 +15,7 @@ public:
     explicit ProducerCore(std::string file_name, bool compress) : file_name_(std::move(file_name)), compress_(compress) {
         read_thread_ = std::thread(&ProducerCore::ReadFromFile, this);
         write_thread_ = std::thread(&ProducerCore::WriteToSharedMemory, this);
-        compress_thread_ = std::thread(&ProducerCore::Compress, this);
+        compress_thread_ = std::thread(&ProducerCore::HandleCompress, this);
     }
 
     ~ProducerCore() {
@@ -30,7 +30,7 @@ public:
 
     void WriteToSharedMemory();
 
-    void Compress();
+    void HandleCompress();
 
     void PrintTotalTime();
 

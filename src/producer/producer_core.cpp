@@ -71,7 +71,7 @@ size_t ProducerCore::SplitIntoPackets(const RawData &raw_data) {
     return total_bytes;
 }
 
-void ProducerCore::Compress() {
+void ProducerCore::HandleCompress() {
     auto start_time = std::chrono::steady_clock::now();
     size_t total_compressed = 0;
 

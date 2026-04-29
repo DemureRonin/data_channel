@@ -2,8 +2,6 @@
 #include <iostream>
 #include "producer_core.h"
 
-#include "zfp.h"
-
 
 int main(int argc, const char *argv[]) {
     if (argc < 2 || argc > 3) {

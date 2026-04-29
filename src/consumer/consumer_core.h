@@ -1,37 +1,63 @@
 #pragma once
+#include <condition_variable>
 #include <thread>
-#include <fstream>
+#include <queue>
+#include <atomic>
+#include <mutex>
+#include <string>
+#include <utility>
+
 #include "../common/shared_memory_consumer.h"
 #include "../common/zfp_codec.h"
-#include "../common/logger.h"
+
 
 class ConsumerCore {
 public:
-    ConsumerCore(const std::string &output_file) : output_file_(output_file) {
-        read_thread_ = std::thread(&ConsumerCore::Run, this);
+    ConsumerCore(std::string output_file, bool compress)
+        : output_file_(std::move(output_file)), compress_(compress) {
+        read_thread_ = std::thread(&ConsumerCore::ReadFromSharedMemory, this);
+        decompress_thread_ = std::thread(&ConsumerCore::HandleDecompress, this);
+        write_thread_ = std::thread(&ConsumerCore::WriteToFile, this);
     }
 
     ~ConsumerCore() {
+        is_done_reading_ = true;
+        is_done_decompressing_ = true;
+
+        packet_cv_.notify_all();
+        raw_data_cv_.notify_all();
+
         if (read_thread_.joinable()) read_thread_.join();
-    }
-
-    void Run() {
-        std::ofstream file(output_file_, std::ios::binary);
-        while (true) {
-            DataPacket packet = reader_.Read();
-            RawData decompressed = ZfpCodec::Decompress(packet);
-            file.write(decompressed.buffer.data(), decompressed.size);
-
-            if (packet.is_last) {
-                break;
-            }
-        }
-        file.close();
+        if (decompress_thread_.joinable()) decompress_thread_.join();
+        if (write_thread_.joinable()) write_thread_.join();
     }
 
 private:
+    void ReadFromSharedMemory();
+
+    void HandleDecompress();
+
+    void WriteToFile();
+
+private:
     std::string output_file_;
+    bool compress_;
+
     SharedMemoryConsumer reader_;
 
+    std::queue<DataPacket> packet_queue_;
+    std::queue<RawData> raw_data_queue_;
+
+    std::mutex packet_queue_mtx_;
+    std::mutex raw_data_queue_mtx_;
+
+    std::condition_variable packet_cv_;
+    std::condition_variable raw_data_cv_;
+
+    std::atomic<bool> is_done_reading_{false};
+    std::atomic<bool> is_done_decompressing_{false};
+
     std::thread read_thread_;
+    std::thread decompress_thread_;
+    std::thread write_thread_;
 };

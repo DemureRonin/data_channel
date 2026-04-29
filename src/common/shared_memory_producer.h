@@ -17,19 +17,14 @@ public:
         empty_.Wait();
         memcpy(getMemory(), &packet, sizeof(DataPacket));
         full_.Post();
-
-        /*std::stringstream ss;
-        ss << "Compressed: size=" << packet.size;
-        ss << " is_last=" << packet.is_last;
-        ss << " original_count=" << packet.original_count;
-
-
-
-         Logger::Log("WriteThread.txt", ss.str());*/
     }
 
     void WaitForEmpty() {
         empty_.Wait();
+    }
+
+    ~SharedMemoryProducer() override {
+        shm_unlink(SHARED_MEM_NAME.c_str());
     }
 
 private:
