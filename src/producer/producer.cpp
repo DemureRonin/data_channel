@@ -1,25 +1,24 @@
 #include <fstream>
 #include <iostream>
+#include <string>
 #include "producer_core.h"
 
-
 int main(int argc, const char *argv[]) {
-    if (argc < 2 || argc > 3) {
-        std::cout << "Usage: producer <filename>" << std::endl;
+    if (argc < 2) {
+        std::cout << "Usage: producer <input_file> [--no-compress]" << std::endl;
         return 1;
     }
 
-    {
-        /*ProducerCore core1(argv[1], false);
-        auto report = core1.Run();
-        PrintReport(report);*/
-    }
-    {
-        ProducerCore core2(argv[1], true);
-        auto report = core2.Run();
-        PrintReport(report);
+    bool compress = true;
+    if (argc >= 3 && std::string(argv[2]) == "--no-compress") {
+        compress = false;
     }
 
+    {
+        ProducerCore core(argv[1], compress);
+        auto report = core.Run();
+        PrintReport(report);
+    }
 
     return 0;
 }

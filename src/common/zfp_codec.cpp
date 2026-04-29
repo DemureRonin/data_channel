@@ -1,9 +1,9 @@
 #include <zfp.h>
 #include <cstring>
-#include <memory>
+#include <vector>
+#include <stdexcept>
 
 #include "zfp_codec.h"
-
 
 DataPacket ZfpCodec::Compress(const RawData &raw_data) {
     const auto *data = reinterpret_cast<const float *>(raw_data.buffer.data());
@@ -11,6 +11,8 @@ DataPacket ZfpCodec::Compress(const RawData &raw_data) {
 
     zfp_field *field = zfp_field_1d(const_cast<float *>(data), zfp_type_float, num_floats);
     zfp_stream *zfp = zfp_stream_open(nullptr);
+
+    // ВАЖНО: режим сжатия
     zfp_stream_set_rate(zfp, COMPRESSION_FACTOR, zfp_type_float, 1, 0);
 
     size_t buf_size = zfp_stream_maximum_size(zfp, field);
@@ -24,11 +26,16 @@ DataPacket ZfpCodec::Compress(const RawData &raw_data) {
 
     size_t compressed_size = zfp_compress(zfp, field);
 
+    if (compressed_size == 0) {
+        throw std::runtime_error("Compression failed");
+    }
+
     if (compressed_size > MAX_PACKET_BUFFER_SIZE) {
         throw std::runtime_error("Compressed data exceeds SHM packet size");
     }
 
-    memcpy(result.buffer.data(), temp_buffer.data(), compressed_size);
+    std::memcpy(result.buffer.data(), temp_buffer.data(), compressed_size);
+
     result.size = compressed_size;
     result.is_last = raw_data.is_last;
     result.original_count = num_floats;
@@ -46,14 +53,23 @@ RawData ZfpCodec::Decompress(const DataPacket &compressed_data) {
     }
 
     size_t num_floats = compressed_data.original_count;
-    size_t decompressed_bytes = num_floats * sizeof(float);
+    if (num_floats == 0) {
+        throw std::runtime_error("Invalid original_count: 0");
+    }
 
+    size_t decompressed_bytes = num_floats * sizeof(float);
 
     zfp_field *field = zfp_field_1d(nullptr, zfp_type_float, num_floats);
     zfp_stream *zfp = zfp_stream_open(nullptr);
 
-    bitstream *bs = stream_open(const_cast<char *>(compressed_data.buffer.data()),
-                                compressed_data.size);
+    // ВАЖНО: тот же режим, что и при сжатии
+    zfp_stream_set_rate(zfp, COMPRESSION_FACTOR, zfp_type_float, 1, 0);
+
+    bitstream *bs = stream_open(
+        const_cast<char *>(compressed_data.buffer.data()),
+        compressed_data.size
+    );
+
     zfp_stream_set_bit_stream(zfp, bs);
     zfp_stream_rewind(zfp);
 
@@ -62,11 +78,12 @@ RawData ZfpCodec::Decompress(const DataPacket &compressed_data) {
     result.size = decompressed_bytes;
     result.original_count = num_floats;
     result.is_last = compressed_data.is_last;
+
     field->data = result.buffer.data();
 
-    size_t decompressed_size = zfp_decompress(zfp, field);
+    size_t status = zfp_decompress(zfp, field);
 
-    if (decompressed_size == 0) {
+    if (status == 0) {
         throw std::runtime_error("Decompression failed");
     }
 
