@@ -44,6 +44,33 @@ void ProducerCore::ReadFromFile() {
     read_time_ = duration.count();
 }
 
+size_t ProducerCore::SplitIntoPackets(const RawData &raw_data) {
+    size_t total_bytes = 0;
+    size_t bytes_remaining = raw_data.size;
+    size_t offset = 0;
+
+    while (bytes_remaining > 0) {
+        DataPacket packet;
+        size_t chunk_size = std::min(bytes_remaining, static_cast<size_t>(MAX_PACKET_BUFFER_SIZE));
+
+        memcpy(packet.buffer.data(), raw_data.buffer.data() + offset, chunk_size);
+        packet.size = chunk_size;
+        packet.original_count = chunk_size / sizeof(float);
+        packet.is_last = (bytes_remaining <= MAX_PACKET_BUFFER_SIZE) && raw_data.is_last;
+
+        {
+            std::lock_guard packet_lock(packet_queue_mtx_);
+            packet_queue_.push(packet);
+        }
+
+        total_bytes += chunk_size;
+        offset += chunk_size;
+        bytes_remaining -= chunk_size;
+    }
+
+    return total_bytes;
+}
+
 void ProducerCore::Compress() {
     auto start_time = std::chrono::steady_clock::now();
     size_t total_compressed = 0;
@@ -63,34 +90,12 @@ void ProducerCore::Compress() {
         if (compress_) {
             auto compressed = ZfpCodec::Compress(raw_data);
             total_compressed += compressed.size;
-
             {
                 std::lock_guard packet_lock(packet_queue_mtx_);
                 packet_queue_.push(compressed);
             }
         } else {
-            size_t bytes_remaining = raw_data.size;
-            size_t offset = 0;
-
-            while (bytes_remaining > 0) {
-                DataPacket packet;
-                size_t chunk_size = std::min(bytes_remaining, (size_t) MAX_PACKET_BUFFER_SIZE);
-
-
-                memcpy(packet.buffer.data(), raw_data.buffer.data() + offset, chunk_size);
-                packet.size = chunk_size;
-                packet.original_count = chunk_size / sizeof(float);
-                packet.is_last = (bytes_remaining <= MAX_PACKET_BUFFER_SIZE) && raw_data.is_last;
-
-                {
-                    std::lock_guard packet_lock(packet_queue_mtx_);
-                    packet_queue_.push(packet);
-                }
-
-                total_compressed += chunk_size;
-                offset += chunk_size;
-                bytes_remaining -= chunk_size;
-            }
+            total_compressed += SplitIntoPackets(raw_data);
         }
 
         is_done_compressing_block_.notify_one();
@@ -103,6 +108,7 @@ void ProducerCore::Compress() {
     compress_time_ = duration.count();
     total_compressed_bytes_ = total_compressed;
 }
+
 
 void ProducerCore::WriteToSharedMemory() {
     auto start_time = std::chrono::steady_clock::now();

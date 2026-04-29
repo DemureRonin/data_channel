@@ -20,7 +20,7 @@ public:
      */
     Semaphore(const std::string &name, unsigned int value,
               bool is_producer,
-              int retries = 10000, int delay_ms = 100);
+              int retries = 10, int delay_ms = 100);
 
     void Wait() const { sem_wait(sem_); }
     void Post() const { sem_post(sem_); }

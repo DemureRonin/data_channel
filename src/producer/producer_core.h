@@ -26,6 +26,8 @@ public:
 
     void ReadFromFile();
 
+    size_t SplitIntoPackets(const RawData &raw_data);
+
     void WriteToSharedMemory();
 
     void Compress();
