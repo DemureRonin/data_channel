@@ -1,4 +1,5 @@
 #include "consumer_core.h"
+#include <iostream>
 
 int main() {
     try {

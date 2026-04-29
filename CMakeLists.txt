@@ -10,7 +10,6 @@ set(COMMON_SRC
 
 set(COMMON_HDR
         src/common/channel_data.h
-        src/common/shared_memory_base.h
         src/common/semaphore.h
         src/common/shared_memory_producer.h
         src/common/shared_memory_consumer.h

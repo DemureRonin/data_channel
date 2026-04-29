@@ -1,4 +1,5 @@
 #include "consumer_core.h"
+#include <fstream>
 
 void ConsumerCore::ReadFromSharedMemory() {
     while (true) {

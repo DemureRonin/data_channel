@@ -1,5 +1,6 @@
 #include "producer_core.h"
 #include "../common/logger.h"
+#include "../common/zfp_codec.h"
 #include <fstream>
 #include <chrono>
 #include <iostream>

@@ -6,17 +6,17 @@
 
 
 DataPacket ZfpCodec::Compress(const RawData &raw_data) {
-    const float *data = reinterpret_cast<const float *>(raw_data.buffer.data());
+    const auto *data = reinterpret_cast<const float *>(raw_data.buffer.data());
     size_t num_floats = raw_data.size / sizeof(float);
 
     zfp_field *field = zfp_field_1d(const_cast<float *>(data), zfp_type_float, num_floats);
     zfp_stream *zfp = zfp_stream_open(nullptr);
     zfp_stream_set_rate(zfp, COMPRESSION_FACTOR, zfp_type_float, 1, 0);
 
-    size_t bufsize = zfp_stream_maximum_size(zfp, field);
+    size_t buf_size = zfp_stream_maximum_size(zfp, field);
 
     DataPacket result;
-    std::vector<char> temp_buffer(bufsize);
+    std::vector<char> temp_buffer(buf_size);
 
     bitstream *bs = stream_open(temp_buffer.data(), temp_buffer.size());
     zfp_stream_set_bit_stream(zfp, bs);

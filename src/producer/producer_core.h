@@ -7,7 +7,7 @@
 #include "../common/channel_data.h"
 
 #include "../common/shared_memory_producer.h"
-#include "../common/zfp_codec.h"
+
 
 
 class ProducerCore {
