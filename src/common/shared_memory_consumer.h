@@ -13,7 +13,8 @@
 class SharedMemoryConsumer {
 public:
     SharedMemoryConsumer() : empty_(SEM_EMPTY, 0, false),
-                             full_(SEM_FULL, 0, false) {
+                             full_(SEM_FULL, 0, false),
+                             done_(SEM_DONE, 0, false) {
         bool shm_ready = false;
 
         constexpr int NUM_RETRIES = 50;
@@ -49,9 +50,14 @@ public:
         return packet;
     }
 
+    void SignalDone() {
+        done_.Post();
+    }
+
 private:
     int fd_;
     void *memory_;
     Semaphore empty_;
     Semaphore full_;
+    Semaphore done_;
 };

@@ -10,10 +10,9 @@
 
 class SharedMemoryProducer {
 public:
-    SharedMemoryProducer() : empty_(SEM_EMPTY, 1, true), full_(SEM_FULL, 0, true) {
-        shm_unlink(SHARED_MEM_NAME.c_str());
-
-
+    SharedMemoryProducer() : empty_(SEM_EMPTY, 1, true),
+                             full_(SEM_FULL, 0, true),
+                             done_(SEM_DONE, 0, true) {
         fd_ = shm_open(SHARED_MEM_NAME.c_str(), O_CREAT | O_RDWR, 0640);
         if (fd_ == -1) throw std::runtime_error("shm_open failed");
 
@@ -21,6 +20,7 @@ public:
 
         memory_ = mmap(nullptr, SHM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd_, 0);
         if (memory_ == MAP_FAILED) throw std::runtime_error("mmap failed");
+
     }
 
     ~SharedMemoryProducer() {
@@ -31,6 +31,7 @@ public:
 
         sem_unlink(SEM_EMPTY.c_str());
         sem_unlink(SEM_FULL.c_str());
+        sem_unlink(SEM_DONE.c_str());
     }
 
     void Write(const DataPacket &packet) {
@@ -43,9 +44,14 @@ public:
         empty_.Wait();
     }
 
+    void WaitForConsumer() {
+        done_.Wait();
+    }
+
 private:
     int fd_;
     void *memory_;
     Semaphore empty_;
     Semaphore full_;
+    Semaphore done_;
 };

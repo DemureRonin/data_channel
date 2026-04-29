@@ -4,7 +4,7 @@
 int main() {
     try {
         {
-            ConsumerCore consumer("out.bin", false);
+           // ConsumerCore consumer("out.bin", false);
         }
 
         {

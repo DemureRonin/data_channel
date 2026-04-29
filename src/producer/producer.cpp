@@ -9,12 +9,15 @@ int main(int argc, const char *argv[]) {
         return 1;
     }
 
-
     {
-        ProducerCore core1(argv[1], false);
+        /*ProducerCore core1(argv[1], false);
+        auto report = core1.Run();
+        PrintReport(report);*/
     }
     {
         ProducerCore core2(argv[1], true);
+        auto report = core2.Run();
+        PrintReport(report);
     }
 
 

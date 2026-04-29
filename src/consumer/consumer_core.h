@@ -2,14 +2,12 @@
 #include <condition_variable>
 #include <thread>
 #include <queue>
-#include <atomic>
 #include <mutex>
 #include <string>
 #include <utility>
 
 #include "../common/shared_memory_consumer.h"
 #include "../common/zfp_codec.h"
-
 
 class ConsumerCore {
 public:
@@ -21,12 +19,6 @@ public:
     }
 
     ~ConsumerCore() {
-        is_done_reading_ = true;
-        is_done_decompressing_ = true;
-
-        packet_cv_.notify_all();
-        raw_data_cv_.notify_all();
-
         if (read_thread_.joinable()) read_thread_.join();
         if (decompress_thread_.joinable()) decompress_thread_.join();
         if (write_thread_.joinable()) write_thread_.join();
@@ -34,9 +26,7 @@ public:
 
 private:
     void ReadFromSharedMemory();
-
     void HandleDecompress();
-
     void WriteToFile();
 
 private:
@@ -53,9 +43,6 @@ private:
 
     std::condition_variable packet_cv_;
     std::condition_variable raw_data_cv_;
-
-    std::atomic<bool> is_done_reading_{false};
-    std::atomic<bool> is_done_decompressing_{false};
 
     std::thread read_thread_;
     std::thread decompress_thread_;

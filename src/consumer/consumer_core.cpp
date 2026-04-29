@@ -1,5 +1,6 @@
 #include "consumer_core.h"
 #include <fstream>
+#include <cstring>
 
 void ConsumerCore::ReadFromSharedMemory() {
     while (true) {
@@ -13,29 +14,27 @@ void ConsumerCore::ReadFromSharedMemory() {
 
         if (packet.is_last) break;
     }
-    is_done_reading_ = true;
-    packet_cv_.notify_all();
 }
 
 void ConsumerCore::HandleDecompress() {
     while (true) {
         std::unique_lock<std::mutex> lock(packet_queue_mtx_);
+
         packet_cv_.wait(lock, [this]() {
-            return !packet_queue_.empty() || is_done_reading_;
+            return !packet_queue_.empty();
         });
 
-        if (packet_queue_.empty() && is_done_reading_) break;
-
-        DataPacket packet = packet_queue_.front();
+        DataPacket packet = std::move(packet_queue_.front());
         packet_queue_.pop();
         lock.unlock();
 
         RawData decompressed;
+
         if (compress_) {
             decompressed = ZfpCodec::Decompress(packet);
         } else {
             decompressed.buffer.resize(packet.size);
-            memcpy(decompressed.buffer.data(), packet.buffer.data(), packet.size);
+            std::memcpy(decompressed.buffer.data(), packet.buffer.data(), packet.size);
             decompressed.size = packet.size;
             decompressed.original_count = packet.original_count;
             decompressed.is_last = packet.is_last;
@@ -43,33 +42,42 @@ void ConsumerCore::HandleDecompress() {
 
         {
             std::lock_guard raw_lock(raw_data_queue_mtx_);
-            raw_data_queue_.push(decompressed);
+            raw_data_queue_.push(std::move(decompressed));
         }
         raw_data_cv_.notify_one();
+
+        if (packet.is_last) break;
     }
-    is_done_decompressing_ = true;
-    raw_data_cv_.notify_all();
 }
 
 void ConsumerCore::WriteToFile() {
     std::ofstream file(output_file_, std::ios::binary);
 
+    if (!file.is_open()) {
+        reader_.SignalDone();
+        return;
+    }
+
     while (true) {
         std::unique_lock<std::mutex> lock(raw_data_queue_mtx_);
+
         raw_data_cv_.wait(lock, [this]() {
-            return !raw_data_queue_.empty() || is_done_decompressing_;
+            return !raw_data_queue_.empty();
         });
 
-        if (raw_data_queue_.empty() && is_done_decompressing_) break;
-
-        RawData data = raw_data_queue_.front();
+        RawData data = std::move(raw_data_queue_.front());
         raw_data_queue_.pop();
         lock.unlock();
 
         file.write(data.buffer.data(), data.size);
 
+        if (file.fail()) {
+            break;
+        }
+
         if (data.is_last) break;
     }
 
     file.close();
+    reader_.SignalDone();
 }
