@@ -4,7 +4,9 @@
  * @file channel_data.h
  * @brief Shared structures for interprocess communication
  */
-
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <semaphore.h>
 #include <array>
 #include <iomanip>
 #include <iostream>
@@ -56,6 +58,17 @@ struct TransferReport {
     size_t space_saved;
     size_t loss;
 };
+
+/**
+ * @brief Force close all semaphores on interrupt
+ */
+[[maybe_unused]] static void signal_handler(int sig) {
+    shm_unlink(SHARED_MEM_NAME.c_str());
+    sem_unlink(SEM_EMPTY.c_str());
+    sem_unlink(SEM_FULL.c_str());
+    sem_unlink(SEM_DONE.c_str());
+    std::exit(sig);
+}
 
 /**
  * @brief Print transfer report to console

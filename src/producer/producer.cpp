@@ -2,8 +2,12 @@
 #include <iostream>
 #include <string>
 #include "producer_core.h"
+#include <csignal>
+
 
 int main(int argc, const char *argv[]) {
+    signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);
     if (argc < 3) {
         std::cout << "Usage: producer <input_file> <output_file> [--no-compress]" << std::endl;
         return 1;
