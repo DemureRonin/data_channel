@@ -11,6 +11,7 @@ cmake .. -DCMAKE_BUILD_TYPE=Release \
          -DCMAKE_CXX_COMPILER=clang++
 make -j4
 ```
+
 ## Run options
 
 ./producer <input_file> [--no-compress]
@@ -18,37 +19,38 @@ make -j4
 ./consumer <output_file> [--no-compress]
 
 #### Recommended to run simultaneously, as consumer waits for semaphores and shared memory
+
 ./producer <input_file> [--no-compress] & ./consumer <output_file> [--no-compress]
 
-## Documentation
 
 ### Compression Algorithm Choice
 
-The ZFP library was chosen for compression. It is reliable, open-source and specifically designed for floating-point data. The main reason is deterministic output size. ZFP fixed-rate mode guarantees that for a given input block of 1120 bytes (280 floats) and bitrate of 7 bits per value, the compressed output size is always constant at approximately 245 bytes. This fits perfectly into the 248 byte SHM payload. ZFP also allows controlled precision loss, which is acceptable according to the task requirements.
+ZFP library was chosen because it guarantees deterministic output size. With fixed-rate mode (7 bits per value), 280 floats (1120 bytes) compress to ~245 bytes, fitting perfectly into the 248-byte SHM
+payload. Loss is allowed and controlled.
 
 ### Synchronization Methods
 
-POSIX named semaphores and shared memory were used. Three semaphores are defined. sem_empty controls write access to SHM and is initialized to 1. sem_full signals available data for reading and is initialized to 0. sem_done notifies the Producer when the Consumer has finished writing to the output file.
+Three POSIX semaphores are used:
 
-Shared memory is a fixed 256 byte segment. The Producer creates the segment and the Consumer opens the existing one. Data packets are copied directly using memcpy.
+- `sem_empty` (initial 1) – controls write access
+- `sem_full` (initial 0) – signals data available
+- `sem_done` – notifies Producer when Consumer finishes
 
-The synchronization flow works as follows. The Producer waits for the empty semaphore, writes the packet to SHM, then signals the full semaphore. The Consumer waits for the full semaphore, reads the packet from SHM, then signals the empty semaphore. At the end of transmission, the done semaphore ensures the Producer knows the Consumer has finished.
+Shared memory is a fixed 256-byte segment. Producer writes via `memcpy`, Consumer reads.
+
+Producer waits for empty - writes - signals full. Consumer waits for full - reads - signals empty.
 
 ### Compromises
 
-Fixed rate compression leaves a few bytes unused in the SHM segment. The payload is 248 bytes and metadata uses approximately 8 bytes. This small waste is an acceptable trade off for predictable behavior and simplified channel management.
-
-Lossy compression with ZFP achieves about 4x compression ratio, reducing the 50 MB file to approximately 11 MB. The controlled error is around 0.1 to 1 percent, which significantly reduces transfer time while loss is explicitly allowed by the task.
+Fixed-rate compression wastes ~8 bytes in SHM (payload 248 bytes, metadata 8 bytes). This is acceptable for predictable behavior. Lossy compression gives 4x ratio with ~7% error,
+reducing transfer time significantly.
 
 ### Optimizations
 
-A three thread pipeline was implemented with separate threads for reading the file, compressing data, and writing to SHM. This overlaps I/O, compression, and SHM operations for better throughput at the cost of additional mutex and condition variable complexity.
+Three-thread pipeline (read file - compress - write to SHM) overlaps I/O, compression, and SHM operations. Bitrate = 7 was manually tuned to keep compressed size under 248 bytes.
 
-The bitrate parameter was manually tuned to 7 bits per value to guarantee that compressed size stays below 248 bytes for all input data patterns while maintaining acceptable numerical accuracy.
-
-The Consumer removes semaphores as the last user and the Producer removes the SHM segment. This prevents resource leaks even if one process terminates unexpectedly.
 
 ### TODO
-- Implement graphical SDL interface
-- Implement thread pool to avoid code duplication and split up decompression process into more threads
 
+- Implement SDL graphical interface
+- Use thread pool to avoid code duplication and split decompression into more threads

@@ -9,15 +9,18 @@ int main(int argc, const char *argv[]) {
     }
 
     bool compress = true;
-    if (argc >= 3 && std::string(argv[2]) == "--no-compress") {
-        compress = false;
+    if (argc >= 3) {
+        std::string flag = argv[2];
+        if (flag == "--no-compress") {
+            compress = false;
+        } else {
+            std::cout << "Unknown option: " << flag << std::endl;
+            std::cout << "Usage: consumer <output_file> [--no-compress]" << std::endl;
+            return 1;
+        }
     }
-    {
-        ConsumerCore consumer(argv[1], compress);
-    }
 
-
-
+    ConsumerCore consumer(argv[1], compress);
 
     return 0;
 }

@@ -19,8 +19,9 @@
  */
 class ProducerCore {
 public:
-    explicit ProducerCore(std::string file_name, bool compress)
-        : file_name_(std::move(file_name)), compress_(compress) {}
+    explicit ProducerCore(std::string input_file, std::string output_file, bool compress)
+        : input_file_(std::move(input_file)), output_file_(std::move(output_file)), compress_(compress) {
+    }
 
     /**
      * @brief Run the producer pipeline
@@ -35,13 +36,19 @@ public:
     [[nodiscard]] TransferReport FormReport() const;
 
 private:
-    void ReadFromFile();
+    void HandleReadFromFile();
+
     size_t SplitIntoPackets(const RawData &raw_data);
+
     void HandleCompress();
+
+    size_t CompareFiles();
+
     void HandleWrite();
 
 private:
-    std::string file_name_;
+    std::string input_file_;
+    std::string output_file_;
     bool compress_;
 
     SharedMemoryProducer writer_;
@@ -66,4 +73,5 @@ private:
 
     size_t total_compressed_bytes_ = 0;
     size_t total_bytes_read_ = 0;
+    size_t loss_ = 0;
 };

@@ -5,10 +5,10 @@
 #include <chrono>
 #include <iostream>
 
-void ProducerCore::ReadFromFile() {
+void ProducerCore::HandleReadFromFile() {
     auto start_time = std::chrono::steady_clock::now();
-    std::ifstream file(file_name_, std::ios::binary);
-    if (!file.is_open()) throw std::runtime_error("failed to open file: " + file_name_);
+    std::ifstream file(input_file_, std::ios::binary);
+    if (!file.is_open()) throw std::runtime_error("failed to open file: " + input_file_);
 
     file.seekg(0, std::ios::end);
     size_t file_size = file.tellg();
@@ -113,6 +113,48 @@ void ProducerCore::HandleCompress() {
     total_compressed_bytes_ = total_compressed;
 }
 
+size_t ProducerCore::CompareFiles() {
+    std::ifstream original(input_file_, std::ios::binary);
+    if (!original.is_open()) throw std::runtime_error("failed to open file: " + input_file_);
+    std::ifstream restored(output_file_, std::ios::binary);
+    if (!restored.is_open()) throw std::runtime_error("failed to open file: " + output_file_);
+
+    original.seekg(0, std::ios::end);
+    restored.seekg(0, std::ios::end);
+    size_t original_size = original.tellg();
+    size_t restored_size = restored.tellg();
+
+    original.seekg(0, std::ios::beg);
+    restored.seekg(0, std::ios::beg);
+
+    size_t num_floats = std::min(original_size, restored_size) / sizeof(float);
+
+    double total_absolute_error = 0.0;
+    double total_original_value = 0.0;
+    double max_absolute_error = 0.0;
+
+    for (size_t i = 0; i < num_floats; ++i) {
+        float orig_val, rest_val;
+        original.read(reinterpret_cast<char*>(&orig_val), sizeof(float));
+        restored.read(reinterpret_cast<char*>(&rest_val), sizeof(float));
+
+        double abs_error = std::abs(orig_val - rest_val);
+        total_absolute_error += abs_error;
+        total_original_value += std::abs(orig_val);
+        max_absolute_error = std::max(max_absolute_error, abs_error);
+    }
+
+
+    double mae = total_absolute_error / num_floats;
+
+
+    double avg_original = total_original_value / num_floats;
+    double loss_percent = (mae / avg_original) * 100.0;
+
+
+    return static_cast<size_t>(loss_percent);
+}
+
 void ProducerCore::HandleWrite() {
     auto start_time = std::chrono::steady_clock::now();
     size_t total_written = 0;
@@ -134,15 +176,17 @@ void ProducerCore::HandleWrite() {
     }
 
     writer_.WaitForEmpty();
-    writer_.WaitForConsumer();
+
 
     auto end_time = std::chrono::steady_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
     write_time_ = duration.count();
+    writer_.WaitForConsumer();
+    loss_ = CompareFiles();
 }
 
 TransferReport ProducerCore::Run() {
-    read_thread_ = std::thread(&ProducerCore::ReadFromFile, this);
+    read_thread_ = std::thread(&ProducerCore::HandleReadFromFile, this);
     compress_thread_ = std::thread(&ProducerCore::HandleCompress, this);
     write_thread_ = std::thread(&ProducerCore::HandleWrite, this);
 
@@ -170,6 +214,6 @@ TransferReport ProducerCore::FormReport() const {
         report.space_saved = 0;
     }
 
-    report.loss = 0;
+    report.loss = loss_;
     return report;
 }
