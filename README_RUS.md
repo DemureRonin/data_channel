@@ -15,14 +15,17 @@ make -j4
 ```
 ## Запуск
 
-./producer <input_file> [--no-compress]
+./producer <input_file> <output_file> [--no-compress]
 
 ./consumer <output_file> [--no-compress]
 
 #### Рекомендуется запускать одновременно, так как Consumer ожидает появления семафоров и разделяемой памяти:
 
-bash
-./producer <входной_файл> [--no-compress] & ./consumer <выходной_файл> [--no-compress]
+#### Со сжатием
+./consumer <output_file> & ./producer <input_file> <output_file>
+
+#### Без сжатия
+./consumer <output_file> --no-compress & ./producer <input_file> <output_file> --no-compress
 
 ### Выбор алгоритма сжатия
 Библиотека ZFP была выбрана потому, что она гарантирует детерминированный размер выходных данных. В режиме фиксированной скорости (7 бит на значение) 280 чисел с плавающей точкой (1120 байт) сжимаются до ~245 байт, что идеально вписывается в 248-байтную полезную нагрузку разделяемой памяти. Потери данных допустимы и контролируемы.
