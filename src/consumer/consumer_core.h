@@ -9,6 +9,14 @@
 #include "../common/shared_memory_consumer.h"
 #include "../common/zfp_codec.h"
 
+/**
+ * @brief Core consumer class: reads from SHM, decompresses, writes to file
+ *
+ * Three-thread pipeline:
+ * - ReadFromSharedMemory: reads packets → packet_queue
+ * - HandleDecompress: decompresses packets → raw_data_queue
+ * - WriteToFile: writes raw data to output file
+ */
 class ConsumerCore {
 public:
     ConsumerCore(std::string output_file, bool compress)
