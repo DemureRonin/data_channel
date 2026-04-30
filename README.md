@@ -47,3 +47,8 @@ A three thread pipeline was implemented with separate threads for reading the fi
 The bitrate parameter was manually tuned to 7 bits per value to guarantee that compressed size stays below 248 bytes for all input data patterns while maintaining acceptable numerical accuracy.
 
 The Consumer removes semaphores as the last user and the Producer removes the SHM segment. This prevents resource leaks even if one process terminates unexpectedly.
+
+### TODO
+- Implement graphical SDL interface
+- Implement thread pool to avoid code duplication and split up decompression process into more threads
+
