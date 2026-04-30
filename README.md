@@ -16,13 +16,17 @@ make -j4
 
 ## Run options
 
-./producer <input_file> [--no-compress]
+./producer <input_file> <output_file> [--no-compress]
 
 ./consumer <output_file> [--no-compress]
 
 #### Recommended to run simultaneously, as consumer waits for semaphores and shared memory
 
-./producer <input_file> [--no-compress] & ./consumer <output_file> [--no-compress]
+### With compression
+./consumer <output_file> & ./producer <input_file> <output_file>
+
+### Without compression
+./consumer <output_file> --no-compress & ./producer <input_file> <output_file> --no-compress
 
 
 ### Compression Algorithm Choice
