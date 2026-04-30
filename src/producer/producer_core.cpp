@@ -112,7 +112,7 @@ void ProducerCore::HandleCompress() {
     total_compressed_bytes_ = total_compressed;
 }
 
-size_t ProducerCore::CompareFiles() {
+size_t ProducerCore::CompareFiles() const {
     std::ifstream original(input_file_, std::ios::binary);
     if (!original.is_open()) throw std::runtime_error("failed to open file: " + input_file_);
     std::ifstream restored(output_file_, std::ios::binary);

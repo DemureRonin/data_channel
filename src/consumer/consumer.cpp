@@ -1,5 +1,3 @@
-#include <csignal>
-
 #include "consumer_core.h"
 #include <iostream>
 #include <string>

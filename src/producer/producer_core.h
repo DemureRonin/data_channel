@@ -42,7 +42,7 @@ private:
 
     void HandleCompress();
 
-    size_t CompareFiles();
+    size_t CompareFiles() const;
 
     void HandleWrite();
 
