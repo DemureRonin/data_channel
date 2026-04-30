@@ -5,10 +5,12 @@ High-performance compressed data channel for interprocess communication using sh
 ## Build
 
 ```bash
-mkdir -p build && cd build
+mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release \
          -DCMAKE_C_COMPILER=clang \
-         -DCMAKE_CXX_COMPILER=clang++
+         -DCMAKE_CXX_COMPILER=clang++ \
+         -DCMAKE_CXX_STANDARD=17 \
+         -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld"
 make -j4
 ```
 

@@ -60,7 +60,7 @@ struct TransferReport {
 /**
  * @brief Print transfer report to console
  */
-static void PrintReport(const TransferReport &report) {
+[[maybe_unused]] static void PrintReport(const TransferReport &report) {
     std::cout << "\n========================================" << std::endl;
     std::cout << "         TRANSFER REPORT                " << std::endl;
     std::cout << "========================================" << std::endl;
@@ -76,14 +76,14 @@ static void PrintReport(const TransferReport &report) {
     std::cout << "  Bytes read:         " << report.bytes_read_from_file << " bytes";
     if (report.bytes_read_from_file > 1024 * 1024) {
         std::cout << " (" << std::fixed << std::setprecision(2)
-                << (double) report.bytes_read_from_file / (1024 * 1024) << " MB)";
+                << static_cast<double>(report.bytes_read_from_file) / (1024 * 1024) << " MB)";
     }
     std::cout << std::endl;
 
     std::cout << "  Bytes sent to SHM:  " << report.bytes_sent_to_shm << " bytes";
     if (report.bytes_sent_to_shm > 1024 * 1024) {
         std::cout << " (" << std::fixed << std::setprecision(2)
-                << (double) report.bytes_sent_to_shm / (1024 * 1024) << " MB)";
+                << static_cast<double>(report.bytes_sent_to_shm) / (1024 * 1024) << " MB)";
     }
     std::cout << std::endl;
 

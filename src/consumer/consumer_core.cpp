@@ -24,7 +24,7 @@ void ConsumerCore::HandleDecompress() {
             return !packet_queue_.empty();
         });
 
-        DataPacket packet = std::move(packet_queue_.front());
+        DataPacket packet = packet_queue_.front();
         packet_queue_.pop();
         lock.unlock();
 

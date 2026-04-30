@@ -12,7 +12,6 @@ DataPacket ZfpCodec::Compress(const RawData &raw_data) {
     zfp_field *field = zfp_field_1d(const_cast<float *>(data), zfp_type_float, num_floats);
     zfp_stream *zfp = zfp_stream_open(nullptr);
 
-    // ВАЖНО: режим сжатия
     zfp_stream_set_rate(zfp, COMPRESSION_FACTOR, zfp_type_float, 1, 0);
 
     size_t buf_size = zfp_stream_maximum_size(zfp, field);
@@ -61,8 +60,6 @@ RawData ZfpCodec::Decompress(const DataPacket &compressed_data) {
 
     zfp_field *field = zfp_field_1d(nullptr, zfp_type_float, num_floats);
     zfp_stream *zfp = zfp_stream_open(nullptr);
-
-    // ВАЖНО: тот же режим, что и при сжатии
     zfp_stream_set_rate(zfp, COMPRESSION_FACTOR, zfp_type_float, 1, 0);
 
     bitstream *bs = stream_open(

@@ -1,6 +1,7 @@
 #include "semaphore.h"
 #include <fcntl.h>
 #include <thread>
+#include <stdexcept>
 
 Semaphore::Semaphore(const std::string &name, unsigned int value,
                      bool is_producer,

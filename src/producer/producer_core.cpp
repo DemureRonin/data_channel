@@ -1,9 +1,8 @@
 #include "producer_core.h"
-#include "../common/logger.h"
+
 #include "../common/zfp_codec.h"
 #include <fstream>
 #include <chrono>
-#include <iostream>
 
 void ProducerCore::HandleReadFromFile() {
     auto start_time = std::chrono::steady_clock::now();
@@ -135,8 +134,8 @@ size_t ProducerCore::CompareFiles() {
 
     for (size_t i = 0; i < num_floats; ++i) {
         float orig_val, rest_val;
-        original.read(reinterpret_cast<char*>(&orig_val), sizeof(float));
-        restored.read(reinterpret_cast<char*>(&rest_val), sizeof(float));
+        original.read(reinterpret_cast<char *>(&orig_val), sizeof(float));
+        restored.read(reinterpret_cast<char *>(&rest_val), sizeof(float));
 
         double abs_error = std::abs(orig_val - rest_val);
         total_absolute_error += abs_error;
@@ -157,7 +156,6 @@ size_t ProducerCore::CompareFiles() {
 
 void ProducerCore::HandleWrite() {
     auto start_time = std::chrono::steady_clock::now();
-    size_t total_written = 0;
 
     while (true) {
         std::unique_lock<std::mutex> lock(compressed_queue_mtx_);
@@ -172,11 +170,8 @@ void ProducerCore::HandleWrite() {
         lock.unlock();
 
         writer_.Write(packet);
-        total_written += packet.size;
     }
-
     writer_.WaitForEmpty();
-
 
     auto end_time = std::chrono::steady_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
