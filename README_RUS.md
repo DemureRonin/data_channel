@@ -21,10 +21,10 @@ make -j4
 
 #### Рекомендуется запускать одновременно, так как Consumer ожидает появления семафоров и разделяемой памяти:
 
-#### Со сжатием
+### Со сжатием
 ./consumer <output_file> & ./producer <input_file> <output_file>
 
-#### Без сжатия
+### Без сжатия
 ./consumer <output_file> --no-compress & ./producer <input_file> <output_file> --no-compress
 
 ### Выбор алгоритма сжатия
