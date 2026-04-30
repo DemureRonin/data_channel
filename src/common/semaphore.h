@@ -6,18 +6,19 @@
 /**
  * @brief POSIX semaphore wrapper for interprocess synchronization.
  *
- * Producer: creates semaphore with initial value
- * Consumer: waits for semaphore to exist, then opens it
+ * Current state:
+ * - Producer: creates semaphore with initial value (O_CREAT, mode 0640)
+ * - Consumer: waits up to `retries` × `delay_ms` for semaphore to appear
+ * - Deletion: `sem_unlink()` called by Producer in destructor only
+ *
+ * @param name      Semaphore name (e.g. "/sem_empty")
+ * @param value     Initial value (Producer only)
+ * @param is_producer true = create, false = open existing with retries
+ * @param retries   Max attempts for Consumer (default 50)
+ * @param delay_ms  Delay between attempts in ms (default 100)
  */
 class Semaphore {
 public:
-    /**
-     * @param name      Semaphore name (e.g. "/sem_empty")
-     * @param value     Initial value (used only for Producer)
-     * @param is_producer true = create semaphore, false = wait & open existing & unlink
-     * @param retries   Max wait attempts for Consumer (default 10000)
-     * @param delay_ms  Delay between attempts in ms (default 100)
-     */
     Semaphore(const std::string &name, unsigned int value,
               bool is_producer,
               int retries = 50, int delay_ms = 100);
