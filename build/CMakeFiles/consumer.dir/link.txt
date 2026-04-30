@@ -1,0 +1,1 @@
+/usr/bin/clang++ -O3 -DNDEBUG -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/consumer.dir/src/consumer/consumer.cpp.o CMakeFiles/consumer.dir/src/consumer/consumer_core.cpp.o CMakeFiles/consumer.dir/src/common/semaphore.cpp.o CMakeFiles/consumer.dir/src/common/zfp_codec.cpp.o -o consumer  _deps/zfp-build/lib/libzfp.a -lpthread

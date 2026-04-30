@@ -1,0 +1,10 @@
+{
+	"InstallScripts" : 
+	[
+		"/Users/demureronin/CLionProjects/data_channel/build/cmake_install.cmake",
+		"/Users/demureronin/CLionProjects/data_channel/build/_deps/zfp-build/cmake_install.cmake",
+		"/Users/demureronin/CLionProjects/data_channel/build/_deps/zfp-build/src/cmake_install.cmake",
+		"/Users/demureronin/CLionProjects/data_channel/build/_deps/zfp-build/utils/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

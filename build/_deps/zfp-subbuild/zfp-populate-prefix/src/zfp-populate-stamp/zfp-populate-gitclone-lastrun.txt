@@ -1,0 +1,15 @@
+# This is a generated file and its contents are an internal implementation detail.
+# The download step will be re-executed if anything in this file changes.
+# No other meaning or use of this file is supported.
+
+method=git
+command=/opt/homebrew/bin/cmake;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;/Users/demureronin/CLionProjects/data_channel/build/_deps/zfp-subbuild/zfp-populate-prefix/tmp/zfp-populate-gitclone.cmake
+source_dir=/Users/demureronin/CLionProjects/data_channel/build/_deps/zfp-src
+work_dir=/Users/demureronin/CLionProjects/data_channel/build/_deps
+repository=https://github.com/LLNL/zfp.git
+remote=origin
+init_submodules=TRUE
+recurse_submodules=--recursive
+submodules=
+CMP0097=NEW
+      
