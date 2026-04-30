@@ -44,13 +44,18 @@ Producer waits for empty - writes - signals full. Consumer waits for full - read
 
 ### Compromises
 
-Fixed-rate compression wastes ~8 bytes in SHM (payload 248 bytes, metadata 8 bytes). This is acceptable for predictable behavior. Lossy compression gives 4x ratio with ~7% error,
-reducing transfer time significantly.
+Fixed-rate compression wastes ~8 bytes in SHM (payload 248 bytes, metadata 8 bytes).  Lossy compression gives 4x ratio with ~7% error.
 
 ### Optimizations
 
 Three-thread pipeline (read file - compress - write to SHM) overlaps I/O, compression, and SHM operations. Bitrate = 7 was manually tuned to keep compressed size under 248 bytes.
 
+## Cleanup
+Application gracefully handles argument errors and interrupts.
+
+If Producer fails, consumer waits for 5 seconds before timing out.
+
+Nonetheless, it is recommended to check **if all semaphores are cleared and processes are dead** in case of bad data or error.
 
 ### TODO
 
